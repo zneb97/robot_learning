@@ -42,7 +42,7 @@ class webScraper():
 		parser = argparse.ArgumentParser(description='Scrape Google images')
 		parser.add_argument('-s', '--term', default=self.search, type=str)
 		parser.add_argument('-n', '--count', default=self.img_count, type=int)
-		parser.add_argument('-d', '--dir', default=self.dir, type=str, help='save directory')
+		parser.add_argument('-d', '--dir', default=self.direct, type=str, help='save directory')
 		args = parser.parse_args()
 		query = args.term
 		max_images = args.count
