@@ -42,9 +42,8 @@ for filename in os.listdir("data"):
                 ball_writer.writerow(str(filename), str(x), str(y), str(radius)])
             else:
                 print "Radius too small!"
-
-
         continue
+
     else:
         continue
 

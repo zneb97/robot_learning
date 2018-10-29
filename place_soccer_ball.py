@@ -1,5 +1,10 @@
 from PIL import Image
 import random, math
+import csv
+
+with open('/home/n4tticus/Desktop/Balls/ball_positions.csv', 'wb') as ball_positions:
+	csv_write = csv.writer(ball_positions, quoting=csv.QUOTE_ALL)
+	csv_write.writerow('')
 
 n = 0
 while n < 3000:
@@ -26,3 +31,7 @@ while n < 3000:
 	empty.thumbnail((320, 240), Image.ANTIALIAS)
 	empty.save('/home/n4tticus/Desktop/Balls/' + str(n) + '.png', format='png')
 	n += 1
+
+	with open('/home/n4tticus/Desktop/Balls/ball_positions.csv', 'a') as ball_positions:
+		csv_write = csv.writer(ball_positions, quoting=csv.QUOTE_ALL)
+		csv_write.writerow(offset)
