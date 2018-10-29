@@ -1,6 +1,8 @@
 import cv2 as cv
 import numpy as np
 import csv
+import pandas
+
 filename = 'testballcenter.jpg'
 base = cv.imread(filename)
 base = cv.resize(base, (320,240), interpolation = cv.INTER_AREA)
@@ -27,7 +29,8 @@ if len(contours) > 0:
     with open('training_labels.csv', mode='w+') as f:
         fw = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         fw.writerow([filename, x, y, radius])
-
+    df = pandas.read_csv('training_labels.csv')
+    print(df)
 
     # Draw circles on image to represent the ball
     if radius > 10:
