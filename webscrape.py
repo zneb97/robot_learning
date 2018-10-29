@@ -4,6 +4,11 @@ for Olin's CompRobo robot learning project
 
 Outputs a number of images scraped from Google that have been
 resized. 
+
+TODO:
+Make xml labels for ball is there or not
+Expand background randomly then use hough transform to locate ball
+Fake and tune cmd vels
 """
 
 from bs4 import BeautifulSoup
