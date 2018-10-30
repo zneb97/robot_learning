@@ -6,6 +6,7 @@ Turn the neato based on learned model
 import rospy
 import pandas
 import math
+import keras
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
 from geometry_msgs.msg import Pose, Twist, Vector3
@@ -102,29 +103,40 @@ class RobotSoccer():
 
    		return model
 
-   	def trainXYRModel(self, train_imgs, train_labels, val_imgs, val_labels):
+
+   	def trainXYRModel(self, labels):
    		"""
 		Train the model we will be using to move to the soccer ball
 		This is based on feeding in an image with associtated angles of the ball
 		and expecting it to return xy_radius tuple
 
-		train_imgs - file path to validation images
-		train_labels - file path to validation images
-		val_imgs - file path to validation images
-		val_labels - file path to validation images
+
    		"""
-   		label_xs = (pandas.read_csv(train_labels))['bounds']
-   		train_labels = (label_xs[0:int(len(label_xs)*.75)], label_ys[0:int(len(label_ys)*.75)], label_rs[0:int(len(label_rs)*.75)])
-   		val_labels = (label_xs[int(len(label_xs)*.75):len(label_xs)], label_ys[int(len(label_ys)*.75:len(label_xs))], label_rs[int(len(label_rs)*.75):len(label_xs)])
-   		
-   		train_images = np.load('images/')[0:int(len(labels)*.75)]
+   		#Top left and bottom right coordinates of the bounding box
+   		label_tlx = (pandas.read_csv(labels))['tlx']
+   		label_tlx = (pandas.read_csv(labels))['tly']
+   		label_tlx = (pandas.read_csv(labels))['brx']
+   		label_tlx = (pandas.read_csv(labels))['bry']
+
+   		train_labels_tlx = label_tlx[0:int(len(label_tlx)*.75)]
+   		train_labels_tly = label_tlx[0:int(len(label_tly)*.75)]
+   		train_labels_brx = label_tlx[0:int(len(label_brx)*.75)]
+   		train_labels_bry = label_tlx[0:int(len(label_bry)*.75)]
+
+   		val_labels_tlx = label_tlx[int(len(label_tlx)*.75):len(label_tlx)]
+   		val_labels_tlx = label_tlx[int(len(label_tly)*.75):len(label_tly)]
+   		val_labels_tlx = label_tlx[int(len(label_brx)*.75):len(label_brx)]
+   		val_labels_tlx = label_tlx[int(len(label_bry)*.75):len(label_bry)]
+
+
+   		train_images = np.load('images/')[0:int(len(label_tlx)*.75)]
    		train_images_prep = preprocess_input(train_images)
    		train_images_flattened = train_images_prep.reshape((train_images_prep.shape[0],
                                                     train_images_bump.prep[1]*
                                                     train_images_bump.prep[2]*
                                                     train_images_bump.prep[3]))
 
-   		val_images = np.load('images/')[int(len(labels)*.75):len(labels)]
+   		val_images = np.load('images/')[int(len(label_tlx)*.75):len(label_tlx)]
    		val_images_prep = preprocess_input(val_images)
    		val_images_flattened = val_images_prep.reshape((val_images_prep.shape[0],
                                                     val_images_bump.prep[1]*
