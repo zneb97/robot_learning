@@ -34,4 +34,4 @@ while n < 3000:
 
 	with open('/home/n4tticus/Desktop/Balls/ball_positions.csv', 'a') as ball_positions:
 		csv_write = csv.writer(ball_positions, quoting=csv.QUOTE_ALL)
-		csv_write.writerow(offset)
+		csv_write.writerow((offset[0]/2, offset[1]/2, (offset[0] + ball_width)/2, (offset[1] + ball_height)/2))
