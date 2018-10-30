@@ -32,6 +32,7 @@ class RobotSoccer():
 	    self.rate = rospy.Rate(2)
 
 	    rospy.Subscriber("/odom", Odometry, self.setLocation)
+	    rospy.Subscriber("/camera_raw", Image, self.setImage)
 
 
 	def publishVelocity(self, linX, angZ):
@@ -115,6 +116,7 @@ class RobotSoccer():
    		label_xs = (pandas.read_csv(train_labels))['bounds']
    		train_labels = (label_xs[0:int(len(label_xs)*.75)], label_ys[0:int(len(label_ys)*.75)], label_rs[0:int(len(label_rs)*.75)])
    		val_labels = (label_xs[int(len(label_xs)*.75):len(label_xs)], label_ys[int(len(label_ys)*.75:len(label_xs))], label_rs[int(len(label_rs)*.75):len(label_xs)])
+   		
    		train_images = np.load('images/')[0:int(len(labels)*.75)]
    		train_images_prep = preprocess_input(train_images)
    		train_images_flattened = train_images_prep.reshape((train_images_prep.shape[0],
@@ -130,3 +132,30 @@ class RobotSoccer():
                                                     val_images_bump.prep[3]))
    		
    		#KERAS MODEL HERE
+
+
+   	def turnToBall(self, theta):
+   		"""
+		Turn the neato to the soccer ball based on the ball's relative location
+		to the neato
+
+		Depending on how theta is calculated may have to do some normalization
+   		"""
+   		start_theta = self.theta
+   		self.publishVelocity(0.0,0.1)
+   		while(start_theta < theta):
+   			continue
+   		self.publishVelocity(0.0,0.0)
+
+
+   	def getBallAngle(self, x,y,r):
+   		"""
+		For the Keras model. Use the ball's x,y, and radius
+		in the pi camera image to determine it's angle from
+		the Neato
+   		"""
+
+   		return 0
+
+   	def run(self):
+
