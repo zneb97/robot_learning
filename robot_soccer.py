@@ -29,6 +29,7 @@ class RobotSoccer():
 	    self.theta = 0.0
 	    self.linVector = Vector3(x=0.0, y=0.0, z=0.0)
 	    self.angVector = Vector3(x=0.0, y=0.0, z=0.0)
+	    self.kp = 1
 
 	    #Getting angle
 	    self.resize = (320, 240)
@@ -37,6 +38,7 @@ class RobotSoccer():
 	    self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
 	    self.center = self.resize[0]/2
 
+	    #Image from pi camera
 	    self.img = None
 
 	    #ROS
@@ -128,16 +130,31 @@ class RobotSoccer():
 	    return angle, difference
 
 
-   	def turnToBall(self, theta):
+   	def turnToBall(self, ball_theta):
    		"""
 		Turn the neato to the soccer ball based on the ball's relative location
 		to the neato
 
 		Depending on how theta is calculated may have to do some normalization
    		"""
+
    		start_theta = self.theta
-   		self.publishVelocity(0.0,0.1)
-   		while(start_theta < theta):
+   		ball_theta = -ball_theta
+   		if ball_theta > 1:
+   			angZ = 0.1
+   		elif ball_theta < -1:
+   			angZ = -0.1
+
+   		#Set angle to turn to
+   		goal_theta = ball_theta+self.theta
+   		if goal_theta > 360:
+   			goal_theta = goal_theta-360
+   		elif goal_theta < 0:
+   			goal_theta = goal_theta+360
+
+
+   		self.publishVelocity(0.0, angZ)
+   		while(self.theta < goal_theta):
    			continue
    		self.publishVelocity(0.0,0.0)
 
@@ -156,9 +173,10 @@ class RobotSoccer():
    			continue
 
    		if useThetaModel:
-   			thetamodel.predict(self.img)
+   			ballTheta = thetaModel.predict(self.img)
    		else:
-   			model.predict(self.img)
+   			ballTheta = xyrModel.predict(self.img)
+   		turnToBall(ballTheta)
 
 
 
