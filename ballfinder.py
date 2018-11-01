@@ -52,6 +52,7 @@ for filename in os.listdir("data"):
             largest_contour = max(contours, key=cv.contourArea)
             ((x, y), radius) = cv.minEnclosingCircle(largest_contour)
 
+
             # Draw circles on image to represent the ball
 
             #todo: Get and send the data as a bounding box.
