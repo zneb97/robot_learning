@@ -4,14 +4,28 @@ import csv
 import cv2 as cv
 import numpy as np
 
+resize = (320, 240)
 csvfile = os.path.join("./data", 'ball_info.csv')
 
 boxlist = []
 
 def rad2box(x, y, rad):
     offset = float(rad)
-    box = (x - offset, y + offset, x + offset, y - offset)
+    box = [x - offset, y + offset, x + offset, y - offset]
     return box
+
+def getAngleDist(x,radius):
+    BALL_DI = 7.5 #ball is 7.5 inches in diameter.
+    FOV = 60. #Field of view in degrees.
+    FOCAL = 150.*12./BALL_DI #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
+    center = resize[0]/2
+    difference = int(x) - center
+    distance = BALL_DI * FOCAL / float(2.*radius)
+    #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
+    #is directly proportional to distance from center.
+    angle = float(difference)/160. * (FOV/2.) #scale to half of FoV
+
+    return angle, distance
 
 for filename in os.listdir("data"):
     if filename.endswith(".png") or filename.endswith(".JPG") or filename.endswith(".jpg"):
@@ -19,7 +33,7 @@ for filename in os.listdir("data"):
         filepath = os.path.join("data", filename)
         base = cv.imread(filepath, 1)
         #cv.imshow('stuff', base)
-        base = cv.resize(base, (320,240), interpolation = cv.INTER_AREA)
+        base = cv.resize(base, resize, interpolation = cv.INTER_AREA)
         img = cv.medianBlur(base.copy(),5)
         img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
 
@@ -42,14 +56,23 @@ for filename in os.listdir("data"):
 
             #todo: Get and send the data as a bounding box.
             if radius > 10:
-                cv.circle(base, (int(x), int(y)), int(radius),
-                    (0, 255, 255), 2)
-                cv.circle(base, (int(x), int(y)), 5,
-                    (0, 0, 255), -1)
+                # cv.circle(base, (int(x), int(y)), int(radius),
+                #     (0, 255, 255), 2)
+                # cv.circle(base, (int(x), int(y)), 5,
+                #     (0, 0, 255), -1)
                 print "coord:" + str(x) + "," + str(y) + " radius:" + str(radius)
+                angle, dist = getAngleDist(float(x), float(radius))
+                print "angle:" + str(angle) + " distance:" + str(dist)
+
                 box = rad2box(float(x), float(y), float(radius))
-                cv.rectangle(base, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (255,0,0), 2)
+                box.append(radius)
+                box.append(float(angle))
+                box.append(dist)
+                #cv.rectangle(base, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (255,0,0), 2)
                 boxlist.append(box)
+
+
+                cv.line(base, (int(x), int(y)), (160, 240), (255,0,0), 1, 8, 0)
 
 
             else:
@@ -59,13 +82,17 @@ for filename in os.listdir("data"):
     else:
         continue
 
+    #todo: Size scaling, angle of ball from the robot's camera pov
+
+
+
 with open('ball_info.csv', mode='w') as ball_info:
     ball_writer = csv.writer(ball_info, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     for i in boxlist:
-        ball_writer.writerow([i[0]] + [i[1]] + [i[2]] + [i[3]])
+        ball_writer.writerow([i[0]] + [i[1]] + [i[2]] + [i[3]] + [i[4]] + [i[5]] + [i[6]])
 
 
 
-# cv.imshow('detected circles', base)
-# cv.waitKey(0)
-# cv.destroyAllWindows()
+cv.imshow('detected circles', base)
+cv.waitKey(0)
+cv.destroyAllWindows()
