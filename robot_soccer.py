@@ -6,7 +6,10 @@ Turn the neato based on learned model
 import rospy
 import pandas
 import math
+import PIL
 import keras
+from keras.models import load_model
+import h5py
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
 from geometry_msgs.msg import Pose, Twist, Vector3
@@ -26,6 +29,17 @@ class RobotSoccer():
 	    self.theta = 0.0
 	    self.linVector = Vector3(x=0.0, y=0.0, z=0.0)
 	    self.angVector = Vector3(x=0.0, y=0.0, z=0.0)
+	    self.kp = 1
+
+	    #Getting angle
+	    self.resize = (320, 240)
+	    self.ball_diameter = 7.5 #ball is 7.5 inches in diameter.
+	    self.fov = 60. #Field of view in degrees.
+	    self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
+	    self.center = self.resize[0]/2
+
+	    #Image from pi camera
+	    self.img = None
 
 	    #ROS
 	    self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=2)
@@ -50,7 +64,7 @@ class RobotSoccer():
         self.pub.publish(Twist(linear=self.linVector, angular=self.angVector))
 
 
-	def setLocation(self):
+	def setLocation(self, odom):
 		""" 
         Convert pose (geometry_msgs.Pose) to a (x, y, theta) tuple 
         Constantly being called as it is the callback function for this node's subscription
@@ -70,7 +84,15 @@ class RobotSoccer():
         return (pose.position.x, pose.position.y, angles[2])
 
 
-   	def trainThetaModel(self, labels):
+    def setImage(self, img):
+    	#TODO add any flattening necessary to put the
+    	#image through the model
+    	img = Image.open(img)
+        img = img.resize(self.resize)
+        self.img = img
+
+
+   	def trainThetaModel(self):
    		"""
 		Train the model we will be using to move to the soccer ball
 		This is based on feeding in an image with associtated angles of the ball
@@ -79,95 +101,89 @@ class RobotSoccer():
 		labels - string file name of the .csv where labels are kept
    		"""
 
-   		#Split the data 3:1 between training and validation
-   		labels = (pandas.read_csv(labels))['theta']
-   		train_labels = labels[0:int(len(labels)*.75)]
-   		val_labels = labels[int(len(labels)*.75):len(labels)]
-
-   		train_images = np.load('images/')[0:int(len(labels)*.75)]
-   		train_images_prep = preprocess_input(train_images)
-   		train_images_flattened = train_images_prep.reshape((train_images_prep.shape[0],
-                                                    train_images_bump.prep[1]*
-                                                    train_images_bump.prep[2]*
-                                                    train_images_bump.prep[3]))
-
-   		val_images = np.load('images/')[int(len(labels)*.75):len(labels)]
-   		val_images_prep = preprocess_input(val_images)
-   		val_images_flattened = val_images_prep.reshape((val_images_prep.shape[0],
-                                                    val_images_bump.prep[1]*
-                                                    val_images_bump.prep[2]*
-                                                    val_images_bump.prep[3]))
-
-   		#Train the model
-   		model = LogisticRegression(C=.000001).fit(train_images_flattened, train_labels)
-
+   		#Training the model and dataset is now on Google Collabratory:
+   		#
+   		#Here we just read in the model from the generated model
+   		model = pickle.load(open('model.pkl', 'rb'))
    		return model
 
-
-   	def trainXYRModel(self, labels):
+   	def trainXYRModel(self):
    		"""
 		Train the model we will be using to move to the soccer ball
 		This is based on feeding in an image with associtated angles of the ball
 		and expecting it to return xy_radius tuple
-
-
    		"""
-   		#Top left and bottom right coordinates of the bounding box
-   		label_tlx = (pandas.read_csv(labels))['tlx']
-   		label_tlx = (pandas.read_csv(labels))['tly']
-   		label_tlx = (pandas.read_csv(labels))['brx']
-   		label_tlx = (pandas.read_csv(labels))['bry']
 
-   		train_labels_tlx = label_tlx[0:int(len(label_tlx)*.75)]
-   		train_labels_tly = label_tlx[0:int(len(label_tly)*.75)]
-   		train_labels_brx = label_tlx[0:int(len(label_brx)*.75)]
-   		train_labels_bry = label_tlx[0:int(len(label_bry)*.75)]
+   		#Training the model and dataset is now on Google Collabratory:
+   		#
+   		#Here we just read in the model from the generated model
+   		model = load_model('model.h5')
+   		return model
 
-   		val_labels_tlx = label_tlx[int(len(label_tlx)*.75):len(label_tlx)]
-   		val_labels_tlx = label_tlx[int(len(label_tly)*.75):len(label_tly)]
-   		val_labels_tlx = label_tlx[int(len(label_brx)*.75):len(label_brx)]
-   		val_labels_tlx = label_tlx[int(len(label_bry)*.75):len(label_bry)]
-
-
-   		train_images = np.load('images/')[0:int(len(label_tlx)*.75)]
-   		train_images_prep = preprocess_input(train_images)
-   		train_images_flattened = train_images_prep.reshape((train_images_prep.shape[0],
-                                                    train_images_bump.prep[1]*
-                                                    train_images_bump.prep[2]*
-                                                    train_images_bump.prep[3]))
-
-   		val_images = np.load('images/')[int(len(label_tlx)*.75):len(label_tlx)]
-   		val_images_prep = preprocess_input(val_images)
-   		val_images_flattened = val_images_prep.reshape((val_images_prep.shape[0],
-                                                    val_images_bump.prep[1]*
-                                                    val_images_bump.prep[2]*
-                                                    val_images_bump.prep[3]))
+   	def getAngleDist(x,radius):
    		
-   		#KERAS MODEL HERE
+	    difference = int(x) - self.center
+	    distance = self.ball_diameter * self.focal / float(2.*radius)
+	    #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
+	    #is directly proportional to distance from center.
+	    angle = float(difference)/160. * (self.fov/2.) #scale to half of FoV
+	    return angle, difference
 
 
-   	def turnToBall(self, theta):
+   	def turnToBall(self, ball_theta):
    		"""
 		Turn the neato to the soccer ball based on the ball's relative location
 		to the neato
 
 		Depending on how theta is calculated may have to do some normalization
    		"""
+
    		start_theta = self.theta
-   		self.publishVelocity(0.0,0.1)
-   		while(start_theta < theta):
+   		ball_theta = -ball_theta
+   		if ball_theta > 1:
+   			angZ = 0.1
+   		elif ball_theta < -1:
+   			angZ = -0.1
+
+   		#Set angle to turn to
+   		goal_theta = ball_theta+self.theta
+   		if goal_theta > 360:
+   			goal_theta = goal_theta-360
+   		elif goal_theta < 0:
+   			goal_theta = goal_theta+360
+
+
+   		self.publishVelocity(0.0, angZ)
+   		while(self.theta < goal_theta):
    			continue
    		self.publishVelocity(0.0,0.0)
 
 
-   	def getBallAngle(self, x,y,r):
-   		"""
-		For the Keras model. Use the ball's x,y, and radius
-		in the pi camera image to determine it's angle from
-		the Neato
-   		"""
-
-   		return 0
-
    	def run(self):
+   		useThetaModel = True
 
+   		#Get the models
+   		if useThetaModel:
+   			thetaModel = trainThetaModel()
+   		else:
+   			xyrModel = trainXYRModel()
+
+   		#Wait for first image to be obtained
+   		while(self.img == None) or (not rospy.is_shutdown()):
+   			continue
+
+   		if useThetaModel:
+   			ballTheta = thetaModel.predict(self.img)
+   		else:
+   			ballTheta = xyrModel.predict(self.img)
+   		turnToBall(ballTheta)
+
+
+
+
+
+
+
+if __name__ == "__main__":
+	rs = RobotSoccer()
+	rs.run()
