@@ -21,9 +21,9 @@ class RobotSoccer():
 
 	def __init__(self):
 
-		self.debugOn = Fasle
+		self.debugOn = False
 
-		#Robot properities
+		#Robot properties
 	    self.x = 0.0
 	    self.y = 0.0
 	    self.theta = 0.0
@@ -32,7 +32,7 @@ class RobotSoccer():
 	    self.kp = 1
 
 	    #Getting angle
-	    self.resize = (320, 240)
+	    self.resize = (160, 120)
 	    self.ball_diameter = 7.5 #ball is 7.5 inches in diameter.
 	    self.fov = 60. #Field of view in degrees.
 	    self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
@@ -65,8 +65,8 @@ class RobotSoccer():
 
 
 	def setLocation(self, odom):
-		""" 
-        Convert pose (geometry_msgs.Pose) to a (x, y, theta) tuple 
+		"""
+        Convert pose (geometry_msgs.Pose) to a (x, y, theta) tuple
         Constantly being called as it is the callback function for this node's subscription
 
         odom is Neato ROS' nav_msgs/Odom msg composed of pose and orientation submessages
@@ -121,7 +121,7 @@ class RobotSoccer():
    		return model
 
    	def getAngleDist(x,radius):
-   		
+
 	    difference = int(x) - self.center
 	    distance = self.ball_diameter * self.focal / float(2.*radius)
 	    #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
@@ -138,7 +138,8 @@ class RobotSoccer():
 		Depending on how theta is calculated may have to do some normalization
    		"""
 
-   		start_theta = self.theta
+		#Determine which way to turn.
+		start_theta = self.theta
    		ball_theta = -ball_theta
    		if ball_theta > 1:
    			angZ = 0.1
@@ -173,6 +174,7 @@ class RobotSoccer():
    			continue
 
    		if useThetaModel:
+			#This method is in the model file.
    			ballTheta = thetaModel.predict(self.img)
    		else:
    			ballTheta = xyrModel.predict(self.img)
