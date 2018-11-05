@@ -3,51 +3,61 @@
 Turn the neato based on learned model
 """
 
-import rospy
 import pandas
 import math
-import PIL
-import keras
+import numpy as np
+from PIL import Image as PImage
+import matplotlib.pyplot as plt
+
 import pickle
-from keras.models import load_model
+from tensorflow.keras.models import load_model
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+
+import rospy
+from sensor_msgs.msg import Image
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
 from geometry_msgs.msg import Pose, Twist, Vector3
 from nav_msgs.msg import Odometry
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
 
 class RobotSoccer():
 
     def __init__(self):
 
-		self.debugOn = False
+        self.debugOn = False
 
-		#Robot properties
-	    self.x = 0.0
-	    self.y = 0.0
-	    self.theta = 0.0
-	    self.linVector = Vector3(x=0.0, y=0.0, z=0.0)
-	    self.angVector = Vector3(x=0.0, y=0.0, z=0.0)
-	    self.kp = 1
+        self.useSciModel = True
 
-	    #Getting angle
-	    self.resize = (160, 120)
-	    self.ball_diameter = 7.5 #ball is 7.5 inches in diameter.
-	    self.fov = 60. #Field of view in degrees.
-	    self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
-	    self.center = self.resize[0]/2
+        #Robot properties
+        self.x = 0.0
+        self.y = 0.0
+        self.theta = 0.0
+        self.linVector = Vector3(x=0.0, y=0.0, z=0.0)
+        self.angVector = Vector3(x=0.0, y=0.0, z=0.0)
+        self.kp = 1
+
+        #Getting angle
+        self.resize = (160, 120)
+        self.ball_diameter = 7.5 #ball is 7.5 inches in diameter.
+        self.fov = 60. #Field of view in degrees.
+        self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
+        self.center = self.resize[0]/2
 
         #Image from pi camera
         self.img = None
 
         #ROS
-        # self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=2)
-        # rospy.init_node('tracePolygon')
-        # self.rate = rospy.Rate(2)
+        self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=2)
+        rospy.init_node('Robot_Soccer')
+        self.rate = rospy.Rate(2)
 
         # rospy.Subscriber("/odom", Odometry, self.setLocation)
-        # rospy.Subscriber("/camera_raw", Image, self.setImage)
+
+        if self.useSciModel:
+            rospy.Subscriber("/camera/image_raw", Image, self.setImageSci)
+        else:
+            rospy.Subscriber('/camera/image_raw', Image, self.setImage)
 
 
     def publishVelocity(self, linX, angZ):
@@ -64,13 +74,14 @@ class RobotSoccer():
         self.pub.publish(Twist(linear=self.linVector, angular=self.angVector))
 
 
-	def setLocation(self, odom):
-		"""
+    def setLocation(self, odom):
+        """
         Convert pose (geometry_msgs.Pose) to a (x, y, theta) tuple
         Constantly being called as it is the callback function for this node's subscription
 
         odom is Neato ROS' nav_msgs/Odom msg composed of pose and orientation submessages
         """
+        
         pose = odom.pose.pose
         orientation_tuple = (pose.orientation.x,
                              pose.orientation.y,
@@ -85,10 +96,21 @@ class RobotSoccer():
 
 
     def setImage(self, img):
-        #TODO add any flattening necessary to put the
-        #image through the model
-        img = Image.open(img)
+        img = PImage.open(img)
         img = img.resize(self.resize)
+        img = np.array(img)
+        img = np.expand_dims(img, axis=0)
+        self.img = img
+
+
+    def setImageSci(self, img):
+      
+        img = PImage.open(img)
+        img = img.resize(self.resize)
+        img = np.array(img)
+        img = img.reshape((img.shape[0]*img.shape[1]*img.shape[2]))
+        img = np.expand_dims(img,axis=0)
+        print(img.shape)
         self.img = img
 
 
@@ -121,14 +143,14 @@ class RobotSoccer():
         model = load_model('kerasModel.h5')
         return model
 
-   	def getAngleDist(x,radius):
+    def getAngleDist(x,radius):
 
-	    difference = int(x) - self.center
-	    distance = self.ball_diameter * self.focal / float(2.*radius)
-	    #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
-	    #is directly proportional to distance from center.
-	    angle = float(difference)/160. * (self.fov/2.) #scale to half of FoV
-	    return angle, difference
+        difference = int(x) - self.center
+        distance = self.ball_diameter * self.focal / float(2.*radius)
+        #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
+        #is directly proportional to distance from center.
+        angle = float(difference)/160. * (self.fov/2.) #scale to half of FoV
+        return angle, difference
 
 
     def turnToBall(self, ball_theta):
@@ -139,13 +161,13 @@ class RobotSoccer():
         Depending on how theta is calculated may have to do some normalization
         """
 
-		#Determine which way to turn.
-		start_theta = self.theta
-   		ball_theta = -ball_theta
-   		if ball_theta > 1:
-   			angZ = 0.1
-   		elif ball_theta < -1:
-   			angZ = -0.1
+        #Determine which way to turn.
+        start_theta = self.theta
+        ball_theta = -ball_theta
+        if ball_theta > 1:
+            angZ = 0.1
+        elif ball_theta < -1:
+            angZ = -0.1
 
         #Set angle to turn to
         goal_theta = ball_theta+self.theta
@@ -162,10 +184,10 @@ class RobotSoccer():
 
 
     def run(self):
-        useThetaModel = True
+        
 
         #Get the models
-        if useThetaModel:
+        if self.useSciModel:
             thetaModel = trainThetaModel()
         else:
             xyrModel = trainXYRModel()
@@ -174,20 +196,26 @@ class RobotSoccer():
         while(self.img == None) or (not rospy.is_shutdown()):
             continue
 
-   		if useThetaModel:
-			#This method is in the model file.
-   			ballTheta = thetaModel.predict(self.img)
-   		else:
-   			ballTheta = xyrModel.predict(self.img)
-   		turnToBall(ballTheta)
+        if self.useSciModel:
+            #This method is in the model file.
+            ballTheta = thetaModel.predict(self.img)
+        else:
+            ballTheta = xyrModel.predict(self.img)
+        turnToBall(ballTheta)
 
-
-
-
-
-
+    def whatever(self):
+        while True or not rospy.is_shutdown():
+            x=1
+            continue
 
 if __name__ == "__main__":
   rs = RobotSoccer()
-  rs.trainThetaModel()
+  rs.whatever()
 
+
+  #Debugging passing image to models
+  model = rs.trainXYRModel()
+  model_sci = rs.trainThetaModel()
+  rs.setImageSci("data/testballcenter.jpg")
+  print(rs.img.shape)
+  print(model_sci.predict(rs.img))
