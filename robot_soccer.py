@@ -9,7 +9,6 @@ import math
 import PIL
 import keras
 from keras.models import load_model
-import h5py
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
 from geometry_msgs.msg import Pose, Twist, Vector3
@@ -19,7 +18,7 @@ from sklearn.metrics import roc_auc_score
 
 class RobotSoccer():
 
-	def __init__(self):
+    def __init__(self):
 
 		self.debugOn = False
 
@@ -38,19 +37,19 @@ class RobotSoccer():
 	    self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
 	    self.center = self.resize[0]/2
 
-	    #Image from pi camera
-	    self.img = None
+        #Image from pi camera
+        self.img = None
 
-	    #ROS
-	    self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=2)
-	    rospy.init_node('tracePolygon')
-	    self.rate = rospy.Rate(2)
+        #ROS
+        # self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=2)
+        # rospy.init_node('tracePolygon')
+        # self.rate = rospy.Rate(2)
 
-	    rospy.Subscriber("/odom", Odometry, self.setLocation)
-	    rospy.Subscriber("/camera_raw", Image, self.setImage)
+        # rospy.Subscriber("/odom", Odometry, self.setLocation)
+        # rospy.Subscriber("/camera_raw", Image, self.setImage)
 
 
-	def publishVelocity(self, linX, angZ):
+    def publishVelocity(self, linX, angZ):
         """
         Publishes velocities to make the robot move
 
@@ -85,40 +84,40 @@ class RobotSoccer():
 
 
     def setImage(self, img):
-    	#TODO add any flattening necessary to put the
-    	#image through the model
-    	img = Image.open(img)
+        #TODO add any flattening necessary to put the
+        #image through the model
+        img = Image.open(img)
         img = img.resize(self.resize)
         self.img = img
 
 
-   	def trainThetaModel(self):
-   		"""
-		Train the model we will be using to move to the soccer ball
-		This is based on feeding in an image with associtated angles of the ball
-		and expecting it to return a theta heading
+    def trainThetaModel(self):
+        """
+        Train the model we will be using to move to the soccer ball
+        This is based on feeding in an image with associtated angles of the ball
+        and expecting it to return a theta heading
 
-		labels - string file name of the .csv where labels are kept
-   		"""
+        labels - string file name of the .csv where labels are kept
+        """
 
-   		#Training the model and dataset is now on Google Collabratory:
-   		#
-   		#Here we just read in the model from the generated model
-   		model = pickle.load(open('model.pkl', 'rb'))
-   		return model
+        #Training the model and dataset is now on Google Collabratory:
+        #
+        #Here we just read in the model from the generated model
+        model = pickle.load(open('model.pkl', 'rb'))
+        return model
 
-   	def trainXYRModel(self):
-   		"""
-		Train the model we will be using to move to the soccer ball
-		This is based on feeding in an image with associtated angles of the ball
-		and expecting it to return xy_radius tuple
-   		"""
+    def trainXYRModel(self):
+        """
+        Train the model we will be using to move to the soccer ball
+        This is based on feeding in an image with associtated angles of the ball
+        and expecting it to return xy_radius tuple
+        """
 
-   		#Training the model and dataset is now on Google Collabratory:
-   		#
-   		#Here we just read in the model from the generated model
-   		model = load_model('model.h5')
-   		return model
+        #Training the model and dataset is now on Google Collabratory:
+        #
+        #Here we just read in the model from the generated model
+        model = load_model('kerasModel.h5')
+        return model
 
    	def getAngleDist(x,radius):
 
@@ -130,13 +129,13 @@ class RobotSoccer():
 	    return angle, difference
 
 
-   	def turnToBall(self, ball_theta):
-   		"""
-		Turn the neato to the soccer ball based on the ball's relative location
-		to the neato
+    def turnToBall(self, ball_theta):
+        """
+        Turn the neato to the soccer ball based on the ball's relative location
+        to the neato
 
-		Depending on how theta is calculated may have to do some normalization
-   		"""
+        Depending on how theta is calculated may have to do some normalization
+        """
 
 		#Determine which way to turn.
 		start_theta = self.theta
@@ -146,32 +145,32 @@ class RobotSoccer():
    		elif ball_theta < -1:
    			angZ = -0.1
 
-   		#Set angle to turn to
-   		goal_theta = ball_theta+self.theta
-   		if goal_theta > 360:
-   			goal_theta = goal_theta-360
-   		elif goal_theta < 0:
-   			goal_theta = goal_theta+360
+        #Set angle to turn to
+        goal_theta = ball_theta+self.theta
+        if goal_theta > 360:
+            goal_theta = goal_theta-360
+        elif goal_theta < 0:
+            goal_theta = goal_theta+360
 
 
-   		self.publishVelocity(0.0, angZ)
-   		while(self.theta < goal_theta):
-   			continue
-   		self.publishVelocity(0.0,0.0)
+        self.publishVelocity(0.0, angZ)
+        while(self.theta < goal_theta):
+            continue
+        self.publishVelocity(0.0,0.0)
 
 
-   	def run(self):
-   		useThetaModel = True
+    def run(self):
+        useThetaModel = True
 
-   		#Get the models
-   		if useThetaModel:
-   			thetaModel = trainThetaModel()
-   		else:
-   			xyrModel = trainXYRModel()
+        #Get the models
+        if useThetaModel:
+            thetaModel = trainThetaModel()
+        else:
+            xyrModel = trainXYRModel()
 
-   		#Wait for first image to be obtained
-   		while(self.img == None) or (not rospy.is_shutdown()):
-   			continue
+        #Wait for first image to be obtained
+        while(self.img == None) or (not rospy.is_shutdown()):
+            continue
 
    		if useThetaModel:
 			#This method is in the model file.
@@ -187,5 +186,5 @@ class RobotSoccer():
 
 
 if __name__ == "__main__":
-	rs = RobotSoccer()
-	rs.run()
+  rs = RobotSoccer()
+  rs.trainXYRModel()
