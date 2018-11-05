@@ -8,6 +8,7 @@ import pandas
 import math
 import PIL
 import keras
+import pickle
 from keras.models import load_model
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
@@ -103,7 +104,8 @@ class RobotSoccer():
         #Training the model and dataset is now on Google Collabratory:
         #
         #Here we just read in the model from the generated model
-        model = pickle.load(open('model.pkl', 'rb'))
+        with open('sciModel.pkl', 'rb') as file:  
+            model = pickle.load(file)
         return model
 
     def trainXYRModel(self):
@@ -185,4 +187,4 @@ class RobotSoccer():
 
 if __name__ == "__main__":
   rs = RobotSoccer()
-  rs.trainXYRModel()
+  rs.trainThetaModel()
