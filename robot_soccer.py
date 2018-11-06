@@ -2,16 +2,7 @@
 """
 Turn the neato based on learned model
 """
-<<<<<<< HEAD
-import tensorflow as tf
-from tensorflow.keras import layers
-import rospy
-import pandas
-import math
-import PIL
-#import keras
-#from keras.models import load_model
-=======
+
 
 import pandas
 import math
@@ -26,7 +17,7 @@ from sklearn.metrics import roc_auc_score
 
 import rospy
 from sensor_msgs.msg import Image
->>>>>>> b912f529c9c8c951d6346e4c390068e78713978c
+
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
 from geometry_msgs.msg import Pose, Twist, Vector3
@@ -40,7 +31,6 @@ class RobotSoccer():
 
         self.useSciModel = True
 
-<<<<<<< HEAD
 		#Robot properties
 		self.x = 0.0
 		self.y = 0.0
@@ -55,22 +45,7 @@ class RobotSoccer():
 		self.fov = 60. #Field of view in degrees.
 		self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
 		self.center = self.resize[0]/2
-=======
-        #Robot properties
-        self.x = 0.0
-        self.y = 0.0
-        self.theta = 0.0
-        self.linVector = Vector3(x=0.0, y=0.0, z=0.0)
-        self.angVector = Vector3(x=0.0, y=0.0, z=0.0)
-        self.kp = 1
 
-        #Getting angle
-        self.resize = (160, 120)
-        self.ball_diameter = 7.5 #ball is 7.5 inches in diameter.
-        self.fov = 60. #Field of view in degrees.
-        self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
-        self.center = self.resize[0]/2
->>>>>>> b912f529c9c8c951d6346e4c390068e78713978c
 
 		#Image from pi camera
 		self.img = None
@@ -232,10 +207,12 @@ class RobotSoccer():
             ballTheta = xyrModel.predict(self.img)
         turnToBall(ballTheta)
 
+
     def whatever(self):
         while True or not rospy.is_shutdown():
             x=1
             continue
+
 
 if __name__ == "__main__":
   rs = RobotSoccer()
