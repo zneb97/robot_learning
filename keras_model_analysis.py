@@ -15,7 +15,6 @@ from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import preprocess_input
 import matplotlib.pyplot as plt
 from tensorflow import keras
-from tensorflow
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.metrics import categorical_crossentropy, categorical_accuracy
 from tensorflow.keras.layers import Flatten, Dense, BatchNormalization
@@ -26,7 +25,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D
 from tensorflow.keras.models import load_model
 
-data = np.load('/home/n4tticus/catkin_ws/robot_learning/balls5.npz')
+data = np.load('/home/n4tticus/Downloads/balls5.npz')
 
 print('data loaded')
 
@@ -60,3 +59,4 @@ val_labels_predict = model.predict(val_images)
 plt.hist(val_labels_predict, bins = 101, label='predicted')
 plt.hist(val_labels, bins = 101, label='actual')
 plt.legend()
+plt.show()

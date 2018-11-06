@@ -7,7 +7,7 @@ import tensorflow as tf
 import pandas
 import math
 import numpy as np
-from skimage.transform import resize
+#from skimage.transform import resize
 from PIL import Image as PImage
 import matplotlib.pyplot as plt
 
@@ -156,14 +156,10 @@ class RobotSoccer():
             return model
 
 
-    def getAngleDist(self, x,radius):
-
-        difference = int(x) - self.center
-        distance = self.ball_diameter * self.focal / float(2.*radius)
-        #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
-        #is directly proportional to distance from center.
-        angle = float(difference)/160. * (self.fov/2.) #scale to half of FoV
-        return angle, difference
+    def getAngleDist(self, x, radius):
+        angle = 60*(x/120) - 30
+        distance = 2.6 - 1.9*radius/75
+        return angle, distance
 
     def trainXYRModel(self):
         """
@@ -203,12 +199,6 @@ class RobotSoccer():
         elif goal_theta < 0:
             goal_theta = goal_theta+360
 
-
-    def whatever(self):
-        while True or not rospy.is_shutdown():
-            x=1
-            continue
-
     def run(self):
         #Get the models
         if self.useSciModel:
@@ -218,7 +208,7 @@ class RobotSoccer():
 
         #Wait for first image to be obtained
         while(self.imageFlag < 5) and (not rospy.is_shutdown()):
-            print(self.imageFlag)
+            #print(self.imageFlag)
             continue
 
         if self.useSciModel:
@@ -242,7 +232,3 @@ class RobotSoccer():
 if __name__ == "__main__":
   rs = RobotSoccer()
   rs.run()
-
-
-                                            
-   
