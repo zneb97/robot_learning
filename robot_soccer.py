@@ -30,8 +30,8 @@ from nav_msgs.msg import Odometry
 class RobotSoccer():
 
     def __init__(self):
-        self.debugOn = False
 
+        self.debugOn = False
         self.useSciModel = False
         self.imageFlag = 0
         self.vizImg = None
@@ -51,16 +51,15 @@ class RobotSoccer():
         self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
         self.center = self.resize[0]/2
 
-
-
         #Image from pi camera
         self.img = None
 
         self.bridge = CvBridge()
 
         #ROS
-        self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=2)
         rospy.init_node('Robot_Soccer')
+        self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=2)
+       
         self.rate = rospy.Rate(2)
 
         # rospy.Subscriber("/odom", Odometry, self.setLocation)
@@ -158,8 +157,9 @@ class RobotSoccer():
 
     def getAngleDist(self, x, radius):
         angle = 60*(x/120) - 30
-        distance = 2.6 - 1.9*radius/75
+        distance = 2.3 - 1.9*radius/75
         return angle, distance
+
 
     def trainXYRModel(self):
         """
@@ -187,9 +187,9 @@ class RobotSoccer():
         start_theta = self.theta
         ball_theta = -ball_theta
         if ball_theta > 1:
-            angZ = 0.1
+            angZ = 0.5
         elif ball_theta < -1:
-            angZ = -0.1
+            angZ = -0.5
 
         #Set angle to turn to
         goal_theta = ball_theta+self.theta
@@ -198,6 +198,22 @@ class RobotSoccer():
             goal_theta = goal_theta-360
         elif goal_theta < 0:
             goal_theta = goal_theta+360
+
+        goal_theta = math.radians(goal_theta) - math.pi
+
+        while(abs(self.theta-goal_theta) > .3):
+            self.publishVelocity(0.0, angZ)
+        self.publishVelocity(0.0, 0.0)
+
+
+    def driveToBall(self, dist):
+        start_pos = (self.x,self.y)
+        currDist = dist
+        while(currDist > .2):
+            self.publishVelocity(0.1, 0.0)
+            currDist = math.sqrt((start_pos[0]-self.x)**2 + (start_pos[1]-self.y)**2)
+        self.publishVelocity(0.0, 0.0)
+
 
     def run(self):
         #Get the models
@@ -225,9 +241,12 @@ class RobotSoccer():
             plt.imshow(img)
             plt.show()
             radius = (ballCoords[0][2]-ballCoords[0][0])/2
-            ballTheta = self.getAngleDist(ballCenter, radius)
+            ballTheta, ballDist = self.getAngleDist(ballCenter, radius)
         print(ballTheta)
-        #turnToBall(ballTheta)
+
+        self.turnToBall(ballTheta)
+        self.driveToBall(ballDist)
+
 
 if __name__ == "__main__":
   rs = RobotSoccer()
