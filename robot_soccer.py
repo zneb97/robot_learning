@@ -18,6 +18,7 @@ from sklearn.metrics import roc_auc_score
 
 import rospy
 from sensor_msgs.msg import Image
+
 import cv2
 from cv_bridge import CvBridge
 
@@ -29,8 +30,8 @@ from nav_msgs.msg import Odometry
 class RobotSoccer():
 
     def __init__(self):
-
         self.debugOn = False
+
         self.useSciModel = False
         self.imageFlag = 0
         self.vizImg = None
@@ -51,8 +52,10 @@ class RobotSoccer():
         self.center = self.resize[0]/2
 
 
+
         #Image from pi camera
         self.img = None
+
         self.bridge = CvBridge()
 
         #ROS
@@ -92,14 +95,13 @@ class RobotSoccer():
 
         pose = odom.pose.pose
         orientation_tuple = (pose.orientation.x,
-                             pose.orientation.y,
-                             pose.orientation.z,
-                             pose.orientation.w)
+                                pose.orientation.y,
+                                pose.orientation.z,
+                                pose.orientation.w)
         angles = euler_from_quaternion(orientation_tuple)
         self.x = pose.position.x
         self.y = pose.position.y
         self.theta = angles[2]
-
         return (pose.position.x, pose.position.y, angles[2])
 
 
@@ -116,6 +118,7 @@ class RobotSoccer():
         img = np.expand_dims(img, axis=0)
         print("Working!")
         self.img = img
+        
 
         self.imageFlag +=1
 
@@ -126,14 +129,14 @@ class RobotSoccer():
             return
 
         img = self.bridge.imgmsg_to_cv2(img, desired_encoding="rgb8")
-        #img = PImage.open(img)
+       # img = PImage.open(img)
         img = cv2.resize(img, (160, 120), interpolation=cv2.INTER_AREA)
+        
         img = np.array(img)
         img = img.reshape((img.shape[0]*img.shape[1]*img.shape[2]))
         img = np.expand_dims(img,axis=0)
         print(img.shape)
         self.img = img
-        self.imageFlag += 1
 
 
     def trainThetaModel(self):
@@ -150,7 +153,17 @@ class RobotSoccer():
         #Here we just read in the model from the generated model
         with open('sciModel.pkl', 'rb') as file:
             model = pickle.load(file)
-        return model
+            return model
+
+
+    def getAngleDist(self, x,radius):
+
+        difference = int(x) - self.center
+        distance = self.ball_diameter * self.focal / float(2.*radius)
+        #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
+        #is directly proportional to distance from center.
+        angle = float(difference)/160. * (self.fov/2.) #scale to half of FoV
+        return angle, difference
 
     def trainXYRModel(self):
         """
@@ -164,15 +177,6 @@ class RobotSoccer():
         #Here we just read in the model from the generated model
         model = tf.keras.models.load_model('kerasModel.h5')
         return model
-
-    def getAngleDist(self, x,radius):
-
-        difference = int(x) - self.center
-        distance = self.ball_diameter * self.focal / float(2.*radius)
-        #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
-        #is directly proportional to distance from center.
-        angle = float(difference)/160. * (self.fov/2.) #scale to half of FoV
-        return angle, difference
 
 
     def turnToBall(self, ball_theta):
@@ -200,11 +204,10 @@ class RobotSoccer():
             goal_theta = goal_theta+360
 
 
-        self.publishVelocity(0.0, angZ)
-        while(self.theta < goal_theta):
+    def whatever(self):
+        while True or not rospy.is_shutdown():
+            x=1
             continue
-        self.publishVelocity(0.0,0.0)
-
 
     def run(self):
         #Get the models
@@ -236,15 +239,10 @@ class RobotSoccer():
         print(ballTheta)
         #turnToBall(ballTheta)
 
-
-
 if __name__ == "__main__":
   rs = RobotSoccer()
   rs.run()
 
-  #Debugging passing image to models
-  # model = rs.trainXYRModel()
-  # model_sci = rs.trainThetaModel()
-  # rs.setImage("data/testballcenter.jpg")
-  # print(rs.img.shape)
-  # print(model.predict(rs.img))
+
+                                            
+   
