@@ -17,6 +17,10 @@ from sklearn.metrics import roc_auc_score
 
 import rospy
 from sensor_msgs.msg import Image
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1e60b4a1e2ed5870586f70b5aacc45ca4f393a74
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
 from geometry_msgs.msg import Pose, Twist, Vector3
@@ -27,6 +31,7 @@ class RobotSoccer():
     def __init__(self):
         self.debugOn = False
         self.useSciModel = True
+<<<<<<< HEAD
         #Robot properties
         self.x = 0.0
         self.y = 0.0
@@ -41,6 +46,24 @@ class RobotSoccer():
         self.fov = 60. #Field of view in degrees.
         self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
         self.center = self.resize[0]/2
+=======
+
+		#Robot properties
+		self.x = 0.0
+		self.y = 0.0
+		self.theta = 0.0
+		self.linVector = Vector3(x=0.0, y=0.0, z=0.0)
+		self.angVector = Vector3(x=0.0, y=0.0, z=0.0)
+		self.kp = 1
+
+		#Getting angle
+		self.resize = (160, 120)
+		self.ball_diameter = 7.5 #ball is 7.5 inches in diameter.
+		self.fov = 60. #Field of view in degrees.
+		self.focal = 150.*12./self.ball_diameter #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
+		self.center = self.resize[0]/2
+
+>>>>>>> 1e60b4a1e2ed5870586f70b5aacc45ca4f393a74
 
 
         #Image from pi camera
@@ -144,6 +167,7 @@ class RobotSoccer():
 
                                         def getAngleDist(x,radius):
 
+<<<<<<< HEAD
                                             difference = int(x) - self.center
                                             distance = self.ball_diameter * self.focal / float(2.*radius)
                                             #Because the camera isn't a 1:1 camera, it has a 60 degree FoV, which makes angle calculations easier because angle
@@ -151,6 +175,18 @@ class RobotSoccer():
                                             angle = float(difference)/160. * (self.fov/2.) #scale to half of FoV
                                             return angle, difference
 
+=======
+
+    def whatever(self):
+        while True or not rospy.is_shutdown():
+            x=1
+            continue
+
+
+if __name__ == "__main__":
+  rs = RobotSoccer()
+  rs.whatever()
+>>>>>>> 1e60b4a1e2ed5870586f70b5aacc45ca4f393a74
 
                                             def turnToBall(self, ball_theta):
                                                 """

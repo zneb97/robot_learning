@@ -7,8 +7,6 @@ from tensorflow import keras
 from tensorflow.keras.applications.vgg16 import VGG16
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import preprocess_input
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow
