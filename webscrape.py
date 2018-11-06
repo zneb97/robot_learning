@@ -5,6 +5,8 @@ for Olin's CompRobo robot learning project
 Outputs a number of images scraped from Google that have been
 resized. 
 
+DISCONTINUED due to generating our own images in known environment
+
 TODO:
 Make xml labels for ball is there or not
 Expand background randomly then use hough transform to locate ball

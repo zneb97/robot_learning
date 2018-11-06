@@ -1,20 +1,36 @@
+"""
+Locate the center of the ball and the distance the neato
+is from it, then draw the correct bounding box around it.
+
+This would be the primary algorithm not using machine learning
+"""
+
 import os, sys
 from os import path
 import csv
 import cv2 as cv
 import numpy as np
 
-resize = (320, 240)
+resize = (160, 120)
 csvfile = os.path.join("./data", 'ball_info.csv')
-
 boxlist = []
 
 def rad2box(x, y, rad):
+    """
+    Returns the coordinates of the upper left and
+    bottom right coordinates of the bounding box 
+    for the ball coordinates based on
+    the radius of the ball and center coordinates
+    """
     offset = float(rad)
     box = [x - offset, y + offset, x + offset, y - offset]
     return box
 
 def getAngleDist(x,radius):
+    """
+    Returns the angle and distance to the ball from 
+    the neato's current position
+    """
     BALL_DI = 7.5 #ball is 7.5 inches in diameter.
     FOV = 60. #Field of view in degrees.
     FOCAL = 150.*12./BALL_DI #The first number is the measured width in pixels of a picture taken at the second number's distance (inches).
@@ -32,7 +48,6 @@ for filename in os.listdir("data"):
         print str(filename)
         filepath = os.path.join("data", filename)
         base = cv.imread(filepath, 1)
-        #cv.imshow('stuff', base)
         base = cv.resize(base, resize, interpolation = cv.INTER_AREA)
         img = cv.medianBlur(base.copy(),5)
         img = cv.cvtColor(img, cv.COLOR_BGR2HSV)
@@ -52,10 +67,7 @@ for filename in os.listdir("data"):
             largest_contour = max(contours, key=cv.contourArea)
             ((x, y), radius) = cv.minEnclosingCircle(largest_contour)
 
-
             # Draw circles on image to represent the ball
-
-            #todo: Get and send the data as a bounding box.
             if radius > 10:
                 # cv.circle(base, (int(x), int(y)), int(radius),
                 #     (0, 255, 255), 2)
@@ -69,12 +81,11 @@ for filename in os.listdir("data"):
                 box.append(radius)
                 box.append(float(angle))
                 box.append(dist)
-                #cv.rectangle(base, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (255,0,0), 2)
+                cv.rectangle(base, (int(box[0]), int(box[1])), (int(box[2]), int(box[3])), (255,0,0), 2)
                 boxlist.append(box)
 
 
                 cv.line(base, (int(x), int(y)), (160, 240), (255,0,0), 1, 8, 0)
-
 
             else:
                 print "Radius too small!"
@@ -82,8 +93,6 @@ for filename in os.listdir("data"):
 
     else:
         continue
-
-    #todo: Size scaling, angle of ball from the robot's camera pov
 
 
 

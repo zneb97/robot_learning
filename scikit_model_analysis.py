@@ -1,3 +1,9 @@
+"""
+Offline version of the analysis of our keras model
+using matplotlib to compare predicted vs expected
+values for validation data set.
+"""
+
 import numpy as np
 import os
 import cv2

@@ -1,3 +1,10 @@
+"""
+For each of the base images of the ball
+near, mid, and far away, randomly generate
+orientation and position along that axis to create
+our training and validation set for our model
+"""
+
 from __future__ import division
 
 from PIL import Image
@@ -8,6 +15,7 @@ with open('/media/n4tticus/ZIEMANN1/Balls/ball_positions.csv', 'wb') as ball_pos
 	csv_write = csv.writer(ball_positions, quoting=csv.QUOTE_ALL)
 	csv_write.writerow('')
 
+#Generate 1000 images per ball y position
 n = 0
 while n < 3000:
 	empty = Image.open('/media/n4tticus/ZIEMANN1/dataSet2/blank.jpg', 'r')

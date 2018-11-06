@@ -1,3 +1,9 @@
+"""
+Convert our data set into a numpy zip file
+for uploading and use on Google Colaboratory
+notebooks.
+"""
+
 import numpy as np
 import cv2
 
@@ -30,8 +36,7 @@ for i in range(0, 3000):
 
 np.savez('/media/n4tticus/ZIEMANN1/balls5.npz', images)
 '''
-#^^^ This is the code we actually ran. the other code was stupidly slow on google. 
-print('okay')
+#^^^ This is the code we actually ran. The other code was slow on google. 
 
 newnpz = np.load('/media/n4tticus/ZIEMANN1/balls5.npz')
 newarr = newnpz['arr_0']
