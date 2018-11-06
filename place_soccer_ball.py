@@ -39,10 +39,13 @@ while n < 3000:
 	angle = random.randint(0, 360)
 	ball = ball.rotate(angle)
 	empty.paste(ball, offset, mask=ball)
-	empty.thumbnail((320, 240), Image.ANTIALIAS)
+	empty.thumbnail((160, 120), Image.ANTIALIAS)
+	offset = (offset[0]/4, offset[1]/4)
+	ball_width = ball_width/4
+	ball_height = ball_height/4
 	empty.save('/media/n4tticus/ZIEMANN1/Balls/' + str(n) + '.png', format='png')
 	n += 1
 
 	with open('/media/n4tticus/ZIEMANN1/Balls/ball_positions.csv', 'a') as ball_positions:
 		csv_write = csv.writer(ball_positions, quoting=csv.QUOTE_ALL)
-		csv_write.writerow((offset[0]/2, offset[1]/2, (offset[0] + ball_width)/2, (offset[1] + ball_height)/2, 2*max_angle*(offset[0]/(640 - ball_width)) - max_angle, math.sqrt((2*max_horizontal*(offset[0]/(640 - ball_width)) - max_horizontal)**2 + distance**2)))
+		csv_write.writerow((offset[0], offset[1], offset[0] + ball_width, offset[1] + ball_height, 2*max_angle*(offset[0]/(640 - ball_width)) - max_angle, math.sqrt((2*max_horizontal*(offset[0]/(640 - ball_width)) - max_horizontal)**2 + distance**2)))
